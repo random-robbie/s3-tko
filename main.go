@@ -19,6 +19,22 @@ import (
 	"github.com/fatih/color"
 )
 
+var (
+	httpClient *http.Client
+)
+
+func init() {
+	tr := &http.Transport{
+		TLSClientConfig:     &tls.Config{InsecureSkipVerify: true},
+		MaxIdleConns:        100,
+		MaxIdleConnsPerHost: 100,
+	}
+	httpClient = &http.Client{
+		Transport: tr,
+		Timeout:   5 * time.Second,
+	}
+}
+
 func main() {
 	flag.Parse()
 
@@ -77,8 +93,7 @@ func main() {
 
 					if resp.StatusCode == http.StatusOK {
 						fmt.Printf("200 response code: %s (%s)\n", u, resp.Status)
-					}
-					if resp.StatusCode != http.StatusOK {
+					} else {
 						fmt.Printf("response code: %s (%s)\n", u, resp.Status)
 						body, err := io.ReadAll(resp.Body)
 						if err != nil {
@@ -107,7 +122,7 @@ func main() {
 	close(urls)
 
 	if sc.Err() != nil {
-		fmt.Printf("error: %s\n", sc.Err())
+		fmt.Fprintf(os.Stderr, "scanner error: %s\n", sc.Err())
 	}
 
 	wg.Wait()
@@ -119,22 +134,14 @@ func resolves(u *url.URL) bool {
 }
 
 func fetchURL(ctx context.Context, u *url.URL) (*http.Response, error) {
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-	client := http.Client{
-		Transport: tr,
-		Timeout:   5 * time.Second,
-	}
-
 	req, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
 	if err != nil {
 		return nil, err
 	}
 
 	req.Close = true
-	req.Header.Set("User-Agent", "s3-tko scanner/0.1")
-	resp, err := client.Do(req)
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
