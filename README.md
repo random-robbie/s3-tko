@@ -1,19 +1,43 @@
 # s3-tko
-AWS S3 Bucket Finder it will take a list of urls and check for the nobucket text.
+
+AWS S3 Bucket Takeover Scanner - A concurrent URL scanner that detects potentially vulnerable S3 buckets by checking for "NoSuchBucket" errors.
 
 ### Shout out to TomNomNom for 99.9% of his code....
 
-### Build
+## Requirements
 
-```
-go get github.com/fatih/color
-go build
-```
+- Go 1.24.4 or later
 
-### Usage
+## Build
 
-```
-cat list.txt | ./s3-tko
+```bash
+go mod tidy
+go build -o s3-tko
 ```
 
-All vuln urls are logged in text.log and then its simple up to you to do a TKO.
+## Usage
+
+From stdin:
+```bash
+cat urls.txt | ./s3-tko
+```
+
+From file:
+```bash
+./s3-tko urls.txt
+```
+
+## Output
+
+- Vulnerable URLs are logged to `text.log`
+- Scan results are printed to stdout
+- Errors are printed to stderr
+
+## Features
+
+- Concurrent scanning with 12 workers
+- DNS resolution checking
+- TLS support with InsecureSkipVerify
+- 5-second request timeout
+- Thread-safe logging
+- Proper resource cleanup
